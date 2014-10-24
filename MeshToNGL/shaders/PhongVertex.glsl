@@ -1,4 +1,4 @@
-#version 400 core
+#version 330 core
 /// @brief the vertex passed in
 layout (location = 0) in vec3 inVert;
 /// @brief the normal passed in
@@ -13,13 +13,6 @@ uniform vec3 viewerPos;
 out vec3 fragmentNormal;
 
 
-struct Materials
-{
-  vec4 ambient;
-  vec4 diffuse;
-  vec4 specular;
-  float shininess;
-};
 
 
 struct Lights
@@ -33,8 +26,6 @@ struct Lights
   float quadraticAttenuation;
   float linearAttenuation;
 };
-// our material
-uniform Materials material;
 // array of lights
 uniform Lights light;
 // direction of the lights used for shading
