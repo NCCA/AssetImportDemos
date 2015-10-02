@@ -1,4 +1,4 @@
-#version 400 core
+#version 330 core
 /// @brief the vertex passed in
 layout (location = 0) in vec3 inVert;
 /// @brief the in uv
@@ -15,7 +15,7 @@ uniform mat4 MVP;
 uniform mat4 M;
 uniform mat4 MV;
 
-uniform mat4 gBones[MAX_BONES];
+uniform mat4 gBones[200];
 out vec2 texCoord;
 out vec3 outNormal;
 out vec3 worldPosition;

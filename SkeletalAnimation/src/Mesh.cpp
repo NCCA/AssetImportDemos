@@ -67,6 +67,7 @@ void Mesh::render() const
 {
   m_vao->bind();
   unsigned int size=m_entries.size();
+  std::cout<<"size is "<<size<<"\n";
   for (unsigned int i = 0 ; i < size; ++i)
   {
   // whist we have the data stored in our VAO structure we only need to bind to re-activate the
@@ -297,7 +298,6 @@ void Mesh::initFromScene(const aiScene* _scene)
   texCords.reserve(NumVertices);
   bones.resize(NumVertices);
   indices.reserve(NumIndices);
-
   // Initialize the meshes in the scene one by one
   for (unsigned int i = 0 ; i < size ; ++i)
   {

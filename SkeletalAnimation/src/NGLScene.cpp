@@ -165,7 +165,7 @@ void NGLScene::loadMatricesToShader()
     ngl::Mat4 MV;
     ngl::Mat4 MVP;
     ngl::Mat4 M;
-    M=m_transform.getMatrix()*m_mouseGlobalTX;
+    M=m_mouseGlobalTX;
     MV=  M*m_cam->getViewMatrix();
     MVP= M*m_cam->getVPMatrix();
     shader->setShaderParamFromMat4("MV",MV);
@@ -197,6 +197,7 @@ void NGLScene::render()
   // set this in the TX stack
   loadMatricesToShader();
   std::vector<ngl::Mat4> transforms;
+
   if(m_animate)
   {
     QTime t=QTime::currentTime();
@@ -213,10 +214,8 @@ void NGLScene::render()
   for (unsigned int i = 0 ; i < size ; ++i)
   {
     std::string name=boost::str(boost::format("gBones[%d]") % i );
-
     shader->setRegisteredUniform(name.c_str(),transforms[i]);
   }
-
 
 
   m_mesh.render();
