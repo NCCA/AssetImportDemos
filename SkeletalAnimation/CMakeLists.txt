@@ -10,11 +10,9 @@ include_directories(/usr/local/include/)
 #the file(GLOB...) allows for wildcard additions of our src dir
 set(SOURCES ${PROJECT_SOURCE_DIR}/src/main.cpp  
 			${PROJECT_SOURCE_DIR}/src/NGLScene.cpp  
-			${PROJECT_SOURCE_DIR}/src/OpenGLWindow.cpp
 			${PROJECT_SOURCE_DIR}/src/AIUtil.cpp
 			${PROJECT_SOURCE_DIR}/src/Mesh.cpp
 			${PROJECT_SOURCE_DIR}/include/NGLScene.h  
-			${PROJECT_SOURCE_DIR}/include/OpenGLWindow.h
 			${PROJECT_SOURCE_DIR}/include/AIUtil.h
 			${PROJECT_SOURCE_DIR}/include/Mesh.h
 
