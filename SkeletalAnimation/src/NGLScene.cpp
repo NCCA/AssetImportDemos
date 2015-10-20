@@ -99,8 +99,8 @@ void NGLScene::initializeGL()
   // we are creating a shader called Skinning
   shader->createShaderProgram("Skinning");
   // now we are going to create empty shaders for Frag and Vert
-  shader->attachShader("SkinningVertex",ngl::VERTEX);
-  shader->attachShader("SkinningFragment",ngl::FRAGMENT);
+  shader->attachShader("SkinningVertex",ngl::ShaderType::VERTEX);
+  shader->attachShader("SkinningFragment",ngl::ShaderType::FRAGMENT);
   // attach the source
   shader->loadShaderSource("SkinningVertex","shaders/SkinningVertex.glsl");
   shader->loadShaderSource("SkinningFragment","shaders/SkinningFragment.glsl");
