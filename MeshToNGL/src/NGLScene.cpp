@@ -197,7 +197,7 @@ void NGLScene::recurseScene(const aiScene *sc, const aiNode *nd,const ngl::Mat4 
           v.ny= mesh->mNormals[index].y;
           v.nz= mesh->mNormals[index].z;
         }
-        if(mesh->mTextureCoords !=NULL && mesh->HasTextureCoords(0))
+        if(mesh->HasTextureCoords(0))
         {
           v.u=mesh->mTextureCoords[0]->x;
           v.v=mesh->mTextureCoords[0]->y;
