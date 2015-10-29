@@ -56,15 +56,14 @@ NGLScene::NGLScene(const std::string &_fname)
 NGLScene::~NGLScene()
 {
   std::cout<<"Shutting down NGL, removing VAO's and Shaders\n";
-  delete m_light;
 }
 
-void NGLScene::resizeGL(int _w, int _h)
+void NGLScene::resizeGL(QResizeEvent *_event)
 {
-  glViewport(0,0,_w,_h);
-  // now set the camera size values as the screen size has changed
-  m_cam->setShape(45,(float)_w/_h,0.05,350);
-  update();
+  m_width=_event->size().width()*devicePixelRatio();
+  m_height=_event->size().height()*devicePixelRatio();
+
+  m_cam.setShape(45,(float)width()/height(),0.05f,350.0f);
 }
 
 
@@ -125,20 +124,20 @@ void NGLScene::initializeGL()
   std::cout<<"from "<<from<<" center "<<center<<"\n";
   ngl::Vec3 up(0,1,0);
   // now load to our new camera
-  m_cam= new ngl::Camera(from,center,up);
+  m_cam.set(from,center,up);
   // set the shape using FOV 45 Aspect Ratio based on Width and Height
   // The final two are near and far clipping planes of 0.5 and 10
-  m_cam->setShape(45,(float)720.0/576.0,0.05,3500);
-  shader->setShaderParam3f("viewerPos",m_cam->getEye().m_x,m_cam->getEye().m_y,m_cam->getEye().m_z);
+  m_cam.setShape(45,(float)720.0/576.0,0.05,3500);
+  shader->setShaderParam3f("viewerPos",m_cam.getEye().m_x,m_cam.getEye().m_y,m_cam.getEye().m_z);
   // now create our light this is done after the camera so we can pass the
   // transpose of the projection matrix to the light to do correct eye space
   // transformations
-  ngl::Mat4 iv=m_cam->getViewMatrix();
+  ngl::Mat4 iv=m_cam.getViewMatrix();
   iv.transpose();
-  m_light = new ngl::Light(from,ngl::Colour(1,1,1,1),ngl::Colour(1,1,1,1),ngl::LightModes::POINTLIGHT );
-  m_light->setTransform(iv);
+  ngl::Light light(from,ngl::Colour(1,1,1,1),ngl::Colour(1,1,1,1),ngl::LightModes::POINTLIGHT );
+  light.setTransform(iv);
   // load these values to the shader as well
-  m_light->loadToShader("light");
+  light.loadToShader("light");
   buildVAOFromScene();
   // as re-size is not explicitly called we need to do this.
   glViewport(0,0,width(),height());
@@ -180,7 +179,7 @@ void NGLScene::recurseScene(const aiScene *sc, const aiNode *nd,const ngl::Mat4 
     verts.clear();
     const aiMesh* mesh = m_scene->mMeshes[nd->mMeshes[n]];
 
-    thisMesh.vao=ngl::VertexArrayObject::createVOA(GL_TRIANGLES);
+    thisMesh.vao.reset(ngl::VertexArrayObject::createVOA(GL_TRIANGLES));
     for (t = 0; t < mesh->mNumFaces; ++t)
     {
       const aiFace* face = &mesh->mFaces[t];
@@ -257,8 +256,8 @@ void NGLScene::loadMatricesToShader()
   ngl::Mat3 normalMatrix;
   ngl::Mat4 M;
   M=m_transform.getMatrix()*m_mouseGlobalTX;
-  MV=  M*m_cam->getViewMatrix();
-  MVP= M*m_cam->getVPMatrix();
+  MV=  M*m_cam.getViewMatrix();
+  MVP= M*m_cam.getVPMatrix();
   normalMatrix=MV;
   normalMatrix.inverse();
   shader->setShaderParamFromMat4("MV",MV);
@@ -289,7 +288,7 @@ void NGLScene::paintGL()
   m_mouseGlobalTX.m_m[3][1] = m_modelPos.m_y;
   m_mouseGlobalTX.m_m[3][2] = m_modelPos.m_z;
   // set this in the TX stack
-  BOOST_FOREACH(meshItem m, m_meshes)
+  BOOST_FOREACH(meshItem &m, m_meshes)
   {
     ngl::Transformation t;
     t.setMatrix(m.tx);

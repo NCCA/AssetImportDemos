@@ -45,7 +45,7 @@ bool Mesh::load(const aiScene *_scene)
   bool success=false;
   m_scene=_scene;
   // we have already forced the load to be trinagles so no need to check
-  m_vao = ngl::VertexArrayObject::createVOA(GL_TRIANGLES);
+  m_vao.reset(ngl::VertexArrayObject::createVOA(GL_TRIANGLES));
   // if we have a valid scene load and init
   if (m_scene)
   {
@@ -66,18 +66,19 @@ bool Mesh::load(const aiScene *_scene)
 void Mesh::render() const
 {
   m_vao->bind();
-  unsigned int size=m_entries.size();
-  for (unsigned int i = 0 ; i < size; ++i)
+  ///unsigned int size=m_entries.size();
+  //for (unsigned int i = 0 ; i < size; ++i)
+  for(auto entry : m_entries)
   {
   // whist we have the data stored in our VAO structure we only need to bind to re-activate the
   // attribute data, then we draw using ElemetsBaseVertex. This is similar to how the
   // sponza demo works, really if you were dealing with different model textures etc this would
   // also be switched here for each of the different mesh entries.
   glDrawElementsBaseVertex(GL_TRIANGLES,
-                           m_entries[i].NumIndices,
+                           entry.NumIndices,
                            GL_UNSIGNED_INT,
-                           (void*)(sizeof(unsigned int) * m_entries[i].BaseIndex),
-                           m_entries[i].BaseVertex
+                           (void*)(sizeof(unsigned int) * entry.BaseIndex),
+                           entry.BaseVertex
                            );
 
   // seems that BaseVertex isn't under linux (not sure why) this works as well but doesn't

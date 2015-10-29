@@ -15,9 +15,9 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/cimport.h>
+#include <array>
 
-
-const static int s_bonesPerVertex=4;
+constexpr int s_bonesPerVertex=4;
 
 
 class Mesh
@@ -78,8 +78,8 @@ private :
   //----------------------------------------------------------------------------------------------------------------------
   struct VertexBoneData
   {
-      unsigned int ids[s_bonesPerVertex];
-      float weights[s_bonesPerVertex];
+      std::array<unsigned int,s_bonesPerVertex> ids;
+      std::array<float,s_bonesPerVertex> weights;
       void addBoneData(uint BoneID, float Weight);
   };
 
@@ -175,7 +175,7 @@ private :
   //----------------------------------------------------------------------------------------------------------------------
   /// @brief the vertex array object to store the mesh data
   //----------------------------------------------------------------------------------------------------------------------
-  ngl::VertexArrayObject *m_vao;
+  std::unique_ptr<ngl::VertexArrayObject>m_vao;
 };
 
 
