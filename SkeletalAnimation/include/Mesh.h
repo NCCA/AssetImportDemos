@@ -16,6 +16,7 @@
 #include <assimp/scene.h>
 #include <assimp/cimport.h>
 #include <array>
+#include <memory>
 
 constexpr int s_bonesPerVertex=4;
 
