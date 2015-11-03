@@ -7,6 +7,7 @@
 #include <ngl/Transformation.h>
 #include <assimp/scene.h>
 #include <QOpenGLWindow>
+#include <memory>
 //----------------------------------------------------------------------------------------------------------------------
 /// @file NGLScene.h
 /// @brief this class inherits from the Qt OpenGLWindow and allows us to use NGL to draw OpenGL
