@@ -9,8 +9,8 @@ layout (location = 2) in vec3 inNormal;
 layout (location=3) in ivec4 BoneIDs;
 layout (location=4) in vec4  Weights;
 
-//const int MAX_BONES = 100;
-#define MAX_BONES 100
+const int MAX_BONES = 100;
+//#define MAX_BONES 100
 uniform mat4 MVP;
 uniform mat4 M;
 uniform mat4 MV;
@@ -57,10 +57,10 @@ out vec3 vPosition;
 void main()
 {
 	 mat4 BoneTransform = gBones[BoneIDs[0]] * Weights[0];
-	 BoneTransform     += gBones[BoneIDs[1]] * Weights[1];
-	 BoneTransform     += gBones[BoneIDs[2]] * Weights[2];
-	 BoneTransform     += gBones[BoneIDs[3]] * Weights[3];
-	 vec4 pos   = BoneTransform*vec4(inVert, 1.0);
+   BoneTransform     += gBones[BoneIDs[1]] * Weights[1];
+   BoneTransform     += gBones[BoneIDs[2]] * Weights[2];
+   BoneTransform     += gBones[BoneIDs[3]] * Weights[3];
+   vec4 pos   = BoneTransform*vec4(inVert, 1.0);
 	 gl_Position    = MVP * pos;
 
 	 texCoord = inUV;

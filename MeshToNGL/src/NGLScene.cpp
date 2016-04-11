@@ -12,18 +12,17 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <assimp/vector3.h>
-#include <boost/foreach.hpp>
 
 
 
 //----------------------------------------------------------------------------------------------------------------------
 /// @brief the increment for x/y translation with mouse movement
 //----------------------------------------------------------------------------------------------------------------------
-const static float INCREMENT=0.01;
+constexpr float INCREMENT=0.01f;
 //----------------------------------------------------------------------------------------------------------------------
 /// @brief the increment for the wheel zoom
 //----------------------------------------------------------------------------------------------------------------------
-const static float ZOOM=0.1;
+constexpr float ZOOM=0.1f;
 
 NGLScene::NGLScene(const std::string &_fname)
 {
@@ -60,17 +59,17 @@ NGLScene::~NGLScene()
 
 void NGLScene::resizeGL(QResizeEvent *_event)
 {
-  m_width=_event->size().width()*devicePixelRatio();
-  m_height=_event->size().height()*devicePixelRatio();
+  m_width=static_cast<int>(_event->size().width()*devicePixelRatio());
+  m_height=static_cast<int>(_event->size().height()*devicePixelRatio());
 
-  m_cam.setShape(45,(float)width()/height(),0.05f,350.0f);
+  m_cam.setShape(45.0f,static_cast<float>(width())/height(),0.05f,350.0f);
 }
 
 void NGLScene::resizeGL(int _w , int _h)
 {
-  m_cam.setShape(45.0f,(float)_w/_h,0.05f,350.0f);
-  m_width=_w*devicePixelRatio();
-  m_height=_h*devicePixelRatio();
+  m_cam.setShape(45.0f,static_cast<float>(_w)/_h,0.05f,350.0f);
+  m_width=static_cast<int>(_w*devicePixelRatio());
+  m_height=static_cast<int>(_h*devicePixelRatio());
 }
 void NGLScene::initializeGL()
 {
@@ -84,34 +83,32 @@ void NGLScene::initializeGL()
   // enable multisampling for smoother drawing
   glEnable(GL_MULTISAMPLE);
   // now to load the shader and set the values
-  // grab an instance of shader manager
-  ngl::ShaderLib *shader=ngl::ShaderLib::instance();
-  // we are creating a shader called Phong
-  shader->createShaderProgram("Phong");
-  // now we are going to create empty shaders for Frag and Vert
-  shader->attachShader("PhongVertex",ngl::ShaderType::VERTEX);
-  shader->attachShader("PhongFragment",ngl::ShaderType::FRAGMENT);
-  // attach the source
-  shader->loadShaderSource("PhongVertex","shaders/PhongVertex.glsl");
-  shader->loadShaderSource("PhongFragment","shaders/PhongFragment.glsl");
-  // compile the shaders
-  shader->compileShader("PhongVertex");
-  shader->compileShader("PhongFragment");
-  // add them to the program
-  shader->attachShaderToProgram("Phong","PhongVertex");
-  shader->attachShaderToProgram("Phong","PhongFragment");
-  // now bind the shader attributes for most NGL primitives we use the following
-  // layout attribute 0 is the vertex data (x,y,z)
-  shader->bindAttribute("Phong",0,"inVert");
-  // attribute 1 is the UV data u,v (if present)
-  shader->bindAttribute("Phong",1,"inUV");
-  // attribute 2 are the normals x,y,z
-  shader->bindAttribute("Phong",2,"inNormal");
+ // grab an instance of shader manager
+ ngl::ShaderLib *shader=ngl::ShaderLib::instance();
+ // we are creating a shader called Phong to save typos
+ // in the code create some constexpr
+ constexpr auto shaderProgram="Phong";
+ constexpr auto vertexShader="PhongVertex";
+ constexpr auto fragShader="PhongFragment";
+ // create the shader program
+ shader->createShaderProgram(shaderProgram);
+ // now we are going to create empty shaders for Frag and Vert
+ shader->attachShader(vertexShader,ngl::ShaderType::VERTEX);
+ shader->attachShader(fragShader,ngl::ShaderType::FRAGMENT);
+ // attach the source
+ shader->loadShaderSource(vertexShader,"shaders/PhongVertex.glsl");
+ shader->loadShaderSource(fragShader,"shaders/PhongFragment.glsl");
+ // compile the shaders
+ shader->compileShader(vertexShader);
+ shader->compileShader(fragShader);
+ // add them to the program
+ shader->attachShaderToProgram(shaderProgram,vertexShader);
+ shader->attachShaderToProgram(shaderProgram,fragShader);
 
-  // now we have associated this data we can link the shader
-  shader->linkProgramObject("Phong");
-  // and make it active ready to load values
-  (*shader)["Phong"]->use();
+ // now we have associated that data we can link the shader
+ shader->linkProgramObject(shaderProgram);
+ // and make it active ready to load values
+ (*shader)[shaderProgram]->use();
   // the shader will use the currently active material and light0 so set them
   ngl::Material m(ngl::STDMAT::GOLD);
   // load our material values to the shader into the structure material (see Vertex shader)
@@ -121,25 +118,25 @@ void NGLScene::initializeGL()
   // First create Values for the camera position
   ngl::Vec3 min,max;
   AIU::getSceneBoundingBox(m_scene,min,max);
-  ngl::Vec3 center=(min+max)/2.0;
+  ngl::Vec3 center=(min+max)/2.0f;
   ngl::Vec3 from;
-  from.m_x=0;
-  from.m_y=max.m_y*4;
-  from.m_z=max.m_z*4;
+  from.m_x=0.0f;
+  from.m_y=max.m_y*4.0f;
+  from.m_z=max.m_z*4.0f;
   std::cout<<"from "<<from<<" center "<<center<<"\n";
-  ngl::Vec3 up(0,1,0);
+
   // now load to our new camera
-  m_cam.set(from,center,up);
+  m_cam.set(from,center,ngl::Vec3::up());
   // set the shape using FOV 45 Aspect Ratio based on Width and Height
   // The final two are near and far clipping planes of 0.5 and 10
-  m_cam.setShape(45,(float)720.0/576.0,0.05,3500);
+  m_cam.setShape(45,720.0f/576.0f,0.05f,3500.0f);
   shader->setShaderParam3f("viewerPos",m_cam.getEye().m_x,m_cam.getEye().m_y,m_cam.getEye().m_z);
   // now create our light this is done after the camera so we can pass the
   // transpose of the projection matrix to the light to do correct eye space
   // transformations
   ngl::Mat4 iv=m_cam.getViewMatrix();
   iv.transpose();
-  ngl::Light light(from,ngl::Colour(1,1,1,1),ngl::Colour(1,1,1,1),ngl::LightModes::POINTLIGHT );
+  ngl::Light light(from,ngl::Colour(1.0f,1.0f,1.0f,1.0f),ngl::Colour(1.0f,1.0f,1.0f,1.0f),ngl::LightModes::POINTLIGHT );
   light.setTransform(iv);
   // load these values to the shader as well
   light.loadToShader("light");
@@ -192,7 +189,7 @@ void NGLScene::recurseScene(const aiScene *sc, const aiNode *nd,const ngl::Mat4 
       if(face->mNumIndices !=3){std::cout<<"mesh size not tri"<<face->mNumIndices<<"\n"; break;}
       for(unsigned int i = 0; i < face->mNumIndices; i++)
       {
-        int index = face->mIndices[i];
+        unsigned int index = face->mIndices[i];
 
 
         if(mesh->mNormals != NULL)
@@ -293,7 +290,7 @@ void NGLScene::paintGL()
   m_mouseGlobalTX.m_m[3][1] = m_modelPos.m_y;
   m_mouseGlobalTX.m_m[3][2] = m_modelPos.m_z;
   // set this in the TX stack
-  BOOST_FOREACH(meshItem &m, m_meshes)
+  for(auto &m :m_meshes)
   {
     ngl::Transformation t;
     t.setMatrix(m.tx);
@@ -314,8 +311,8 @@ void NGLScene::mouseMoveEvent (QMouseEvent * _event)
   {
     int diffx=_event->x()-m_origX;
     int diffy=_event->y()-m_origY;
-    m_spinXFace += (float) 0.5f * diffy;
-    m_spinYFace += (float) 0.5f * diffx;
+    m_spinXFace += static_cast<int>( 0.5f * diffy);
+    m_spinYFace += static_cast<int>( 0.5f * diffx);
     m_origX = _event->x();
     m_origY = _event->y();
     update();
@@ -324,8 +321,8 @@ void NGLScene::mouseMoveEvent (QMouseEvent * _event)
         // right mouse translate code
   else if(m_translate && _event->buttons() == Qt::RightButton)
   {
-    int diffX = (int)(_event->x() - m_origXPos);
-    int diffY = (int)(_event->y() - m_origYPos);
+    int diffX = static_cast<int>(_event->x() - m_origXPos);
+    int diffY = static_cast<int>(_event->y() - m_origYPos);
     m_origXPos=_event->x();
     m_origYPos=_event->y();
     m_modelPos.m_x += INCREMENT * diffX;

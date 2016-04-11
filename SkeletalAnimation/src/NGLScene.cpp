@@ -8,6 +8,7 @@
 #include <ngl/NGLStream.h>
 #include <ngl/ShaderLib.h>
 #include <ngl/Material.h>
+#include <ngl/NGLStream.h>
 #include <assimp/cimport.h>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -21,11 +22,11 @@
 //----------------------------------------------------------------------------------------------------------------------
 /// @brief the increment for x/y translation with mouse movement
 //----------------------------------------------------------------------------------------------------------------------
-const static float INCREMENT=0.1;
+constexpr float INCREMENT=0.1f;
 //----------------------------------------------------------------------------------------------------------------------
 /// @brief the increment for the wheel zoom
 //----------------------------------------------------------------------------------------------------------------------
-const static float ZOOM=1.0;
+constexpr float ZOOM=1.0f;
 
 NGLScene::NGLScene(const char *_fname)
 {
@@ -36,7 +37,7 @@ NGLScene::NGLScene(const char *_fname)
   m_spinYFace=0;
   setTitle("Using libassimp with NGL for Animation");
   m_animate=true;
-  m_frameTime=0.0;
+  m_frameTime=0.0f;
   m_sceneName=_fname;
 
 
@@ -52,16 +53,16 @@ void NGLScene::resizeGL(QResizeEvent *_event)
 {
 
   // now set the camera size values as the screen size has changed
-  m_cam.setShape(45.0f,(float)width()/height(),0.05f,350.0f);
-  m_width=_event->size().width()*devicePixelRatio();
-  m_height=_event->size().height()*devicePixelRatio();
+  m_cam.setShape(45.0f,static_cast<float>(width())/height(),0.05f,350.0f);
+  m_width=static_cast<int>(_event->size().width()*devicePixelRatio());
+  m_height=static_cast<int>(_event->size().height()*devicePixelRatio());
 }
 
 void NGLScene::resizeGL(int _w , int _h)
 {
-  m_cam.setShape(45.0f,(float)_w/_h,0.05f,350.0f);
-  m_width=_w*devicePixelRatio();
-  m_height=_h*devicePixelRatio();
+  m_cam.setShape(45.0f,static_cast<float>(_w)/_h,0.05f,350.0f);
+  m_width=static_cast<int>(_w*devicePixelRatio());
+  m_height=static_cast<int>(_h*devicePixelRatio());
 }
 void NGLScene::initializeGL()
 {
@@ -98,25 +99,29 @@ void NGLScene::initializeGL()
   // now to load the shader and set the values
   // grab an instance of shader manager
   ngl::ShaderLib *shader=ngl::ShaderLib::instance();
-  // we are creating a shader called Skinning
-  shader->createShaderProgram("Skinning");
+  // we are creating a shader called Skinning use string to avoid typos
+  auto constexpr Skinning="Skinning";
+  auto constexpr SkinningVertex="SkinningVertex";
+  auto constexpr SkinningFragment="SkinningFragment";
+
+  shader->createShaderProgram(Skinning);
   // now we are going to create empty shaders for Frag and Vert
-  shader->attachShader("SkinningVertex",ngl::ShaderType::VERTEX);
-  shader->attachShader("SkinningFragment",ngl::ShaderType::FRAGMENT);
+  shader->attachShader(SkinningVertex,ngl::ShaderType::VERTEX);
+  shader->attachShader(SkinningFragment,ngl::ShaderType::FRAGMENT);
   // attach the source
-  shader->loadShaderSource("SkinningVertex","shaders/SkinningVertex.glsl");
-  shader->loadShaderSource("SkinningFragment","shaders/SkinningFragment.glsl");
+  shader->loadShaderSource(SkinningVertex,"shaders/SkinningVertex.glsl");
+  shader->loadShaderSource(SkinningFragment,"shaders/SkinningFragment.glsl");
   // compile the shaders
-  shader->compileShader("SkinningVertex");
-  shader->compileShader("SkinningFragment");
+  shader->compileShader(SkinningVertex);
+  shader->compileShader(SkinningFragment);
   // add them to the program
-  shader->attachShaderToProgram("Skinning","SkinningVertex");
-  shader->attachShaderToProgram("Skinning","SkinningFragment");
+  shader->attachShaderToProgram(Skinning,SkinningVertex);
+  shader->attachShaderToProgram(Skinning,SkinningFragment);
   // now bind the shader attributes for most NGL primitives we use the following
   // now we have associated this data we can link the shader
-  shader->linkProgramObject("Skinning");
-  shader->autoRegisterUniforms("Skinning");
-  (*shader)["Skinning"]->use();
+  shader->linkProgramObject(Skinning);
+  shader->printRegisteredUniforms(Skinning);
+  (*shader)[Skinning]->use();
 
   // the shader will use the currently active material and light0 so set them
   ngl::Material m(ngl::STDMAT::GOLD);
@@ -124,19 +129,18 @@ void NGLScene::initializeGL()
   m.loadToShader("material");
   ngl::Vec3 min,max;
   AIU::getSceneBoundingBox(m_scene,min,max);
-  ngl::Vec3 center=(min+max)/2.0;
+  ngl::Vec3 center=(min+max)/2.0f;
   ngl::Vec3 from;
   from.m_x=0;
-  from.m_y=max.m_y*4;
-  from.m_z=max.m_z*4;
+  from.m_y=max.m_y*4.0f;
+  from.m_z=max.m_z*4.0f;
   std::cout<<"from "<<from<<" center "<<center<<"\n";
-  ngl::Vec3 up(0,1,0);
   // now load to our new camera
-  m_cam.set(from,center,up);
+  m_cam.set(from,center,ngl::Vec3::up());
   // set the shape using FOV 45 Aspect Ratio based on Width and Height
   // The final two are near and far clipping planes of 0.5 and 10
-  m_cam.setShape(45,(float)720.0/576.0,0.05,350);
-  shader->setShaderParam3f("viewerPos",m_cam.getEye().m_x,m_cam.getEye().m_y,m_cam.getEye().m_z);
+  m_cam.setShape(45.0f,720.0f/576.0f,0.05f,350.0f);
+  shader->setUniform("viewerPos",m_cam.getEye().toVec3());
   // now create our light this is done after the camera so we can pass the
   // transpose of the projection matrix to the light to do correct eye space
   // transformations
@@ -162,9 +166,9 @@ void NGLScene::loadMatricesToShader()
     M=m_transform.getMatrix()*m_mouseGlobalTX;
     MV=  M*m_cam.getViewMatrix();
     MVP= M*m_cam.getVPMatrix();
-    shader->setShaderParamFromMat4("MV",MV);
-    shader->setRegisteredUniform("MVP",MVP);
-    shader->setShaderParamFromMat4("M",M);
+    shader->setUniform("MV",MV);
+    shader->setUniform("MVP",MVP);
+    shader->setUniform("M",M);
 }
 
 void NGLScene::paintGL()
@@ -195,21 +199,19 @@ void NGLScene::paintGL()
   if(m_animate)
   {
     QTime t=QTime::currentTime();
-    float time=float(t.msec()/1000.0)*m_mesh.getDuration()/m_mesh.getTicksPerSec();
-
+    float time=(t.msec()/1000.0f)*m_mesh.getDuration()/m_mesh.getTicksPerSec();
     m_mesh.boneTransform(time, transforms);
   }
   else
   {
     m_mesh.boneTransform(m_frameTime, transforms);
-
   }
-  unsigned int size=transforms.size();
+
+  auto size=transforms.size();
   for (unsigned int i = 0 ; i < size ; ++i)
   {
     std::string name=boost::str(boost::format("gBones[%d]") % i );
-
-    shader->setRegisteredUniform(name.c_str(),transforms[i]);
+    shader->setUniform(name.c_str(),transforms[i]);
   }
 
 
@@ -227,8 +229,8 @@ void NGLScene::mouseMoveEvent (QMouseEvent * _event)
   {
     int diffx=_event->x()-m_origX;
     int diffy=_event->y()-m_origY;
-    m_spinXFace += (float) 0.5f * diffy;
-    m_spinYFace += (float) 0.5f * diffx;
+    m_spinXFace += 0.5f * diffy;
+    m_spinYFace += 0.5f * diffx;
     m_origX = _event->x();
     m_origY = _event->y();
     update();
@@ -237,8 +239,8 @@ void NGLScene::mouseMoveEvent (QMouseEvent * _event)
         // right mouse translate code
   else if(m_translate && _event->buttons() == Qt::RightButton)
   {
-    int diffX = (int)(_event->x() - m_origXPos);
-    int diffY = (int)(_event->y() - m_origYPos);
+    int diffX = static_cast<int>(_event->x() - m_origXPos);
+    int diffY = static_cast<int>(_event->y() - m_origYPos);
     m_origXPos=_event->x();
     m_origYPos=_event->y();
     m_modelPos.m_x += INCREMENT * diffX;
