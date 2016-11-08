@@ -1,5 +1,5 @@
-#ifndef AIUTIL_H__
-#define AIUTIL_H__
+#ifndef AIUTIL_H_
+#define AIUTIL_H_
 #include <assimp/scene.h>
 #include <assimp/cimport.h>
 /// @brief some useful conversion routines for assimp to ngl

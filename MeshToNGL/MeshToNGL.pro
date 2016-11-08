@@ -21,6 +21,7 @@ SOURCES+= $$PWD/src/AIUtil.cpp   \
 					$$PWD/src/main.cpp
 # same for the .h files
 HEADERS+= $$PWD/include/AIUtil.h \
+          $$PWD/include/WindowParams.h \
 					$$PWD/include/NGLScene.h
 # and add the include dir into the search path for Qt and make
 INCLUDEPATH +=./include

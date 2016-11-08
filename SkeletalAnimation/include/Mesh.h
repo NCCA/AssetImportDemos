@@ -1,5 +1,5 @@
-#ifndef MESH_H__
-#define MESH_H__
+#ifndef MESH_H_
+#define MESH_H_
 
 /// @note this is based on several demos and converted to NGL
 /// http://ogldev.atspace.co.uk/www/tutorial38/tutorial38.html
