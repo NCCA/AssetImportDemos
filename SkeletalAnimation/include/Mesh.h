@@ -10,7 +10,7 @@
 #include <ngl/Mat4.h>
 #include <ngl/Vec3.h>
 #include <ngl/Quaternion.h>
-#include <ngl/VertexArrayObject.h>
+#include <ngl/AbstractVAO.h>
 #include <vector>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -176,7 +176,7 @@ private :
   //----------------------------------------------------------------------------------------------------------------------
   /// @brief the vertex array object to store the mesh data
   //----------------------------------------------------------------------------------------------------------------------
-  std::unique_ptr<ngl::VertexArrayObject>m_vao;
+  std::unique_ptr<ngl::AbstractVAO>m_vao;
 };
 
 

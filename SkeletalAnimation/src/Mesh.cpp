@@ -1,8 +1,12 @@
 #include "Mesh.h"
 #include "AIUtil.h"
 #include <ngl/Util.h>
+#include <ngl/NGLInit.h>
 #include <cassert>
 #include <iostream>
+#include <ngl/AbstractVAO.h>
+#include <ngl/VAOFactory.h>
+#include "MultiBufferIndexVAO.h"
 /// @note this is based on several demos and converted to NGL
 /// http://ogldev.atspace.co.uk/www/tutorial38/tutorial38.html
 /// http://zylinski.se
@@ -45,7 +49,7 @@ bool Mesh::load(const aiScene *_scene)
   bool success=false;
   m_scene=_scene;
   // we have already forced the load to be trinagles so no need to check
-  m_vao.reset(ngl::VertexArrayObject::createVOA(GL_TRIANGLES));
+  m_vao.reset(ngl::VAOFactory::createVAO("multiBufferIndexVAO" ,GL_TRIANGLES));
   // if we have a valid scene load and init
   if (m_scene)
   {
@@ -307,16 +311,22 @@ void Mesh::initFromScene(const aiScene* _scene)
   }
 
   m_vao->bind();
-  m_vao->setIndexedData(positions.size()*sizeof(ngl::Vec3),positions[0].m_x,indices.size(),&indices[0],GL_UNSIGNED_INT,GL_STATIC_DRAW);
+  m_vao->setData(MultiBufferIndexVAO::VertexData(positions.size()*sizeof(ngl::Vec3),positions[0].m_x));//,indices.size(),&indices[0],GL_UNSIGNED_INT,GL_STATIC_DRAW);
   m_vao->setVertexAttributePointer(0,3,GL_FLOAT,0,0);
-  m_vao->setIndexedData(texCords.size()*sizeof(ngl::Vec2),texCords[0].m_x,indices.size(),&indices[0],GL_UNSIGNED_INT,GL_STATIC_DRAW);
+  m_vao->setData(MultiBufferIndexVAO::VertexData(texCords.size()*sizeof(ngl::Vec2),texCords[0].m_x));//,indices.size(),&indices[0],GL_UNSIGNED_INT,GL_STATIC_DRAW);
   m_vao->setVertexAttributePointer(1,2,GL_FLOAT,0,0);
 
-  m_vao->setIndexedData(normals.size()*sizeof(ngl::Vec3),normals[0].m_x,indices.size(),&indices[0],GL_UNSIGNED_INT,GL_STATIC_DRAW);
+  m_vao->setData(MultiBufferIndexVAO::VertexData(normals.size()*sizeof(ngl::Vec3),normals[0].m_x));//,indices.size(),&indices[0],GL_UNSIGNED_INT,GL_STATIC_DRAW);
   m_vao->setVertexAttributePointer(2,3,GL_FLOAT,0,0);
 
-  m_vao->setRawIndexedData(sizeof(VertexBoneData) * bones.size(),&bones[0],indices.size(),&indices[0],GL_UNSIGNED_INT,GL_STATIC_DRAW);
-  m_vao->setVertexAttributeIPointer(3,4,GL_INT,sizeof(VertexBoneData),0);
+  // as we are storing the abstract we need to get the concrete here to call setIndices, do a quick cast
+
+  dynamic_cast<MultiBufferIndexVAO *>( m_vao.get())->setIndices(indices.size(),&indices[0], GL_UNSIGNED_INT);
+
+
+  dynamic_cast<MultiBufferIndexVAO *>( m_vao.get())->setData(sizeof(VertexBoneData) * bones.size(),&bones[0],GL_STATIC_DRAW);
+
+  dynamic_cast<MultiBufferIndexVAO *>( m_vao.get())->setVertexAttributePointer(3,4,GL_INT,sizeof(VertexBoneData),0);
   m_vao->setVertexAttributePointer(4,4,GL_FLOAT,sizeof(VertexBoneData),4);
   m_vao->setNumIndices(indices.size());
   m_vao->unbind();
@@ -394,6 +404,5 @@ void Mesh::loadBones(unsigned int _meshIndex, const aiMesh* _mesh, std::vector<V
 
 void Mesh::clear()
 {
-  m_vao->removeVOA();
 
 }

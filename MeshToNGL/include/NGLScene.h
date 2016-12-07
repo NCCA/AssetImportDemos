@@ -2,9 +2,7 @@
 #define NGLSCENE_H_
 #include "WindowParams.h"
 #include <ngl/Camera.h>
-#include <ngl/Colour.h>
-#include <ngl/Light.h>
-#include <ngl/Text.h>
+#include <ngl/AbstractVAO.h>
 #include <ngl/Transformation.h>
 #include <assimp/scene.h>
 #include <QOpenGLWindow>
@@ -77,7 +75,7 @@ private:
      struct meshItem
      {
        ngl::Mat4 tx;
-       std::shared_ptr< ngl::VertexArrayObject> vao;
+       std::shared_ptr< ngl::AbstractVAO> vao;
      };
 
     std::vector<meshItem > m_meshes;
