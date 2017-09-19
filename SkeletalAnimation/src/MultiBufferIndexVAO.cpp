@@ -122,4 +122,8 @@ void MultiBufferIndexVAO::setIndices(unsigned int _indexSize,const GLvoid *_inde
   m_indexType=_indexType;
 }
 
-
+ngl::Real *MultiBufferIndexVAO::mapBuffer(unsigned int _index, GLenum _accessMode)
+{
+  ngl::Real *ptr=nullptr;
+  return ptr;
+}
