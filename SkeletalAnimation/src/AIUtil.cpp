@@ -17,7 +17,8 @@ namespace AIU
                      _m.c1,_m.c2,_m.c3,_m.c4,
                      _m.d1,_m.d2,_m.d3,_m.d4
                      );
-  }
+
+}
 
 
   ngl::Mat4 aiMatrix4x4ToNGLMat4Transpose(const aiMatrix4x4 &_m)

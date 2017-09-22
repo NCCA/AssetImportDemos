@@ -68,7 +68,7 @@ void main()
 	 fragmentNormal   = normalize((M * Normal).xyz);
 
 
-	 vec4 worldPosition = M * vec4(inVert, 1.0);
+   vec4 worldPosition = M * vec4(inVert, 1.0);
 	 eyeDirection = normalize(viewerPos - worldPosition.xyz);
 	 // Get vertex position in eye coordinates
 	 // Transform the vertex to eye co-ordinates for frag shader

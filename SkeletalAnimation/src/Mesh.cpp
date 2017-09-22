@@ -247,7 +247,7 @@ void Mesh::recurseNodeHeirarchy(float _animationTime, const aiNode* _node, const
     // Interpolate translation and generate translation transformation matrix
     ngl::Vec3 translation=calcInterpolatedPosition(_animationTime, nodeAnim);
     // Combine the above transformations
-    nodeTransform = rotationMatrix*scaleMatrix;
+    nodeTransform = scaleMatrix*rotationMatrix;
     nodeTransform.m_30=translation.m_x;
     nodeTransform.m_31=translation.m_y;
     nodeTransform.m_32=translation.m_z;
@@ -256,12 +256,16 @@ void Mesh::recurseNodeHeirarchy(float _animationTime, const aiNode* _node, const
   }
 
 
-  ngl::Mat4 globalTransform = _parentTransform * nodeTransform;
+  ngl::Mat4 globalTransform =  nodeTransform*_parentTransform;
 
   if (m_boneMapping.find(name) != m_boneMapping.end())
   {
     unsigned int boneIndex = m_boneMapping[name];
-    m_boneInfo[boneIndex].finalTransformation = m_globalInverseTransform * globalTransform * m_boneInfo[boneIndex].boneOffset;
+    m_boneInfo[boneIndex].finalTransformation = m_boneInfo[boneIndex].boneOffset *
+                                                globalTransform *
+                                                m_globalInverseTransform
+                                                ;
+
   }
 
   for (unsigned int i = 0 ; i < _node->mNumChildren ; ++i)
