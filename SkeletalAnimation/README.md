@@ -1,4 +1,4 @@
-#Skeletal Animation using assimp
+# Skeletal Animation using assimp
 
 This demo is based on several posts
 
