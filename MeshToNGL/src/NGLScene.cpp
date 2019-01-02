@@ -4,11 +4,9 @@
 #include "NGLScene.h"
 #include "AIUtil.h"
 #include <iostream>
-#include <ngl/Light.h>
 #include <ngl/NGLInit.h>
 #include <ngl/NGLStream.h>
 #include <ngl/ShaderLib.h>
-#include <ngl/Material.h>
 #include <ngl/VAOFactory.h>
 #include <ngl/SimpleVAO.h>
 #include <assimp/cimport.h>
@@ -33,7 +31,7 @@ NGLScene::NGLScene(const std::string &_fname)
 												 aiProcess_PreTransformVertices |
 												 aiProcess_FixInfacingNormals
 												 );
-	if(m_scene == 0)
+  if(m_scene == nullptr)
 	{
 			std::cout<<"error opening file "<<_fname<<"\n";
 			exit(EXIT_FAILURE);
@@ -51,7 +49,7 @@ NGLScene::~NGLScene()
 
 void NGLScene::resizeGL(int _w , int _h)
 {
-  m_cam.setShape(45.0f,static_cast<float>(_w)/_h,0.05f,350.0f);
+  m_project=ngl::perspective(45.0f,static_cast<float>(_w)/_h,0.5f,550.0f);
   m_win.width=static_cast<int>(_w*devicePixelRatio());
   m_win.height=static_cast<int>(_h*devicePixelRatio());
 }
@@ -66,6 +64,21 @@ void NGLScene::initializeGL()
   glEnable(GL_DEPTH_TEST);
   // enable multisampling for smoother drawing
   glEnable(GL_MULTISAMPLE);
+  // Now we will create a basic Camera from the graphics library
+  // This is a static camera so it only needs to be set once
+  // First create Values for the camera position
+  ngl::Vec3 min,max;
+  AIU::getSceneBoundingBox(m_scene,min,max);
+  ngl::Vec3 center=(min+max)/2.0f;
+  ngl::Vec3 from;
+  from.m_x=0.0f;
+  from.m_y=max.m_y*4.0f;
+  from.m_z=max.m_z*4.0f;
+  std::cout<<"from "<<from<<" center "<<center<<"\n";
+
+  // now load to our new camera
+  m_view=ngl::lookAt(from,center,ngl::Vec3::up());
+
   // now to load the shader and set the values
  // grab an instance of shader manager
  ngl::ShaderLib *shader=ngl::ShaderLib::instance();
@@ -93,40 +106,25 @@ void NGLScene::initializeGL()
  shader->linkProgramObject(shaderProgram);
  // and make it active ready to load values
  (*shader)[shaderProgram]->use();
-  // the shader will use the currently active material and light0 so set them
-  ngl::Material m(ngl::STDMAT::GOLD);
-  // load our material values to the shader into the structure material (see Vertex shader)
-  m.loadToShader("material");
-  // Now we will create a basic Camera from the graphics library
-  // This is a static camera so it only needs to be set once
-  // First create Values for the camera position
-  ngl::Vec3 min,max;
-  AIU::getSceneBoundingBox(m_scene,min,max);
-  ngl::Vec3 center=(min+max)/2.0f;
-  ngl::Vec3 from;
-  from.m_x=0.0f;
-  from.m_y=max.m_y*4.0f;
-  from.m_z=max.m_z*4.0f;
-  std::cout<<"from "<<from<<" center "<<center<<"\n";
+ ngl::Vec4 lightPos=from;
+ ngl::Mat4 iv=m_view;
+ iv.inverse().transpose();
+ shader->setUniform("light.position",lightPos*iv);
+ shader->setUniform("light.ambient",0.1f,0.1f,0.1f,1.0f);
+ shader->setUniform("light.diffuse",1.0f,1.0f,1.0f,1.0f);
+ shader->setUniform("light.specular",0.8f,0.8f,0.8f,1.0f);
+ // gold like phong material
+ shader->setUniform("material.ambient",0.274725f,0.1995f,0.0745f,0.0f);
+ shader->setUniform("material.diffuse",0.75164f,0.60648f,0.22648f,0.0f);
+ shader->setUniform("material.specular",0.628281f,0.555802f,0.3666065f,0.0f);
+ shader->setUniform("material.shininess",51.2f);
+ shader->setUniform("viewerPos",from);
 
-  // now load to our new camera
-  m_cam.set(from,center,ngl::Vec3::up());
-  // set the shape using FOV 45 Aspect Ratio based on Width and Height
-  // The final two are near and far clipping planes of 0.5 and 10
-  m_cam.setShape(45,720.0f/576.0f,0.05f,3500.0f);
-  shader->setUniform("viewerPos",m_cam.getEye().m_x,m_cam.getEye().m_y,m_cam.getEye().m_z);
-  // now create our light this is done after the camera so we can pass the
-  // transpose of the projection matrix to the light to do correct eye space
-  // transformations
-  ngl::Mat4 iv=m_cam.getViewMatrix();
-  iv.transpose();
-  ngl::Light light(from,ngl::Colour(1.0f,1.0f,1.0f,1.0f),ngl::Colour(1.0f,1.0f,1.0f,1.0f),ngl::LightModes::POINTLIGHT );
-  light.setTransform(iv);
-  // load these values to the shader as well
-  light.loadToShader("light");
+
   buildVAOFromScene();
   // as re-size is not explicitly called we need to do this.
-  glViewport(0,0,width(),height());
+  m_project=ngl::perspective(45.0f,static_cast<float>(width())/height(),0.5f,550.0f);
+
 }
 
 void NGLScene::buildVAOFromScene()
@@ -165,7 +163,7 @@ void NGLScene::recurseScene(const aiScene *sc, const aiNode *nd,const ngl::Mat4 
     verts.clear();
     const aiMesh* mesh = m_scene->mMeshes[nd->mMeshes[n]];
 
-    thisMesh.vao.reset(ngl::VAOFactory::createVAO(ngl::simpleVAO,GL_TRIANGLES));
+    thisMesh.vao=ngl::VAOFactory::createVAO(ngl::simpleVAO,GL_TRIANGLES);
     for (t = 0; t < mesh->mNumFaces; ++t)
     {
       const aiFace* face = &mesh->mFaces[t];
@@ -176,7 +174,7 @@ void NGLScene::recurseScene(const aiScene *sc, const aiNode *nd,const ngl::Mat4 
         unsigned int index = face->mIndices[i];
 
 
-        if(mesh->mNormals != NULL)
+        if(mesh->mNormals != nullptr)
         {
           v.nx= mesh->mNormals[index].x;
           v.ny= mesh->mNormals[index].y;
@@ -221,7 +219,7 @@ void NGLScene::recurseScene(const aiScene *sc, const aiNode *nd,const ngl::Mat4 
     thisMesh.vao->setNumIndices(verts.size());
     // finally we have finished for now so time to unbind the VAO
     thisMesh.vao->unbind();
-    m_meshes.push_back(thisMesh);
+    m_meshes.emplace_back(std::move(thisMesh));
   }
 
   // draw all children
@@ -245,8 +243,8 @@ void NGLScene::loadMatricesToShader()
 //  MV=  M*m_cam.getViewMatrix();
 //  MVP= M*m_cam.getVPMatrix();
   M   = m_mouseGlobalTX * m_transform.getMatrix();
-  MV  = m_cam.getViewMatrix() * M;
-  MVP = m_cam.getVPMatrix() * M;
+  MV  = m_view * M;
+  MVP = m_project* MV;
   normalMatrix=MV;
   normalMatrix.inverse().transpose();
   shader->setUniform("MV",MV);
@@ -259,6 +257,7 @@ void NGLScene::paintGL()
 {
   // clear the screen and depth buffer
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glViewport(0,0,m_win.width,m_win.height);
   // grab an instance of the shader manager
   ngl::ShaderLib *shader=ngl::ShaderLib::instance();
   (*shader)["Phong"]->use();

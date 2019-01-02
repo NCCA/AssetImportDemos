@@ -1,7 +1,6 @@
 #ifndef NGLSCENE_H_
 #define NGLSCENE_H_
 #include "WindowParams.h"
-#include <ngl/Camera.h>
 #include <ngl/AbstractVAO.h>
 #include <ngl/Transformation.h>
 #include <assimp/scene.h>
@@ -57,7 +56,8 @@ private:
     //----------------------------------------------------------------------------------------------------------------------
     /// @brief Our Camera
     //----------------------------------------------------------------------------------------------------------------------
-    ngl::Camera m_cam;
+    ngl::Mat4 m_view;
+    ngl::Mat4 m_project;
     //----------------------------------------------------------------------------------------------------------------------
     /// @brief transformation stack for the gl transformations etc
     //----------------------------------------------------------------------------------------------------------------------
@@ -75,7 +75,7 @@ private:
      struct meshItem
      {
        ngl::Mat4 tx;
-       std::shared_ptr< ngl::AbstractVAO> vao;
+       std::unique_ptr< ngl::AbstractVAO> vao;
      };
 
     std::vector<meshItem > m_meshes;

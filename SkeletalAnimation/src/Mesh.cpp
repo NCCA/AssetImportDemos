@@ -49,7 +49,7 @@ bool Mesh::load(const aiScene *_scene)
   bool success=false;
   m_scene=_scene;
   // we have already forced the load to be trinagles so no need to check
-  m_vao.reset(ngl::VAOFactory::createVAO("multiBufferIndexVAO" ,GL_TRIANGLES));
+  m_vao=ngl::VAOFactory::createVAO("multiBufferIndexVAO" ,GL_TRIANGLES);
   // if we have a valid scene load and init
   if (m_scene)
   {

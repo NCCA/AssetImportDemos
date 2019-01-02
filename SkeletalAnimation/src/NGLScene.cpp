@@ -7,7 +7,6 @@
 #include <ngl/NGLInit.h>
 #include <ngl/NGLStream.h>
 #include <ngl/ShaderLib.h>
-#include <ngl/Material.h>
 #include <ngl/NGLStream.h>
 #include <assimp/cimport.h>
 #include <assimp/scene.h>
@@ -37,7 +36,7 @@ NGLScene::~NGLScene()
 
 void NGLScene::resizeGL(int _w , int _h)
 {
-  m_cam.setShape(45.0f,static_cast<float>(_w)/_h,0.05f,350.0f);
+  m_project=ngl::perspective(45.0f,static_cast<float>(_w)/_h,0.05f,350.0f);
   m_win.width=static_cast<int>(_w*devicePixelRatio());
   m_win.height=static_cast<int>(_h*devicePixelRatio());
 }
@@ -103,10 +102,6 @@ void NGLScene::initializeGL()
   shader->printRegisteredUniforms(Skinning);
   (*shader)[Skinning]->use();
 
-  // the shader will use the currently active material and light0 so set them
-  ngl::Material m(ngl::STDMAT::GOLD);
-  // load our material values to the shader into the structure material (see Vertex shader)
-  m.loadToShader("material");
   ngl::Vec3 min,max;
   AIU::getSceneBoundingBox(m_scene,min,max);
   ngl::Vec3 center=(min+max)/2.0f;
@@ -116,21 +111,15 @@ void NGLScene::initializeGL()
   from.m_z=max.m_z*4.0f;
   std::cout<<"from "<<from<<" center "<<center<<"\n";
   // now load to our new camera
-  m_cam.set(from,center,ngl::Vec3::up());
+  m_view=ngl::lookAt(from,center,ngl::Vec3::up());
   // set the shape using FOV 45 Aspect Ratio based on Width and Height
   // The final two are near and far clipping planes of 0.5 and 10
-  m_cam.setShape(45.0f,720.0f/576.0f,0.05f,350.0f);
-  shader->setUniform("viewerPos",m_cam.getEye().toVec3());
+  m_project=ngl::perspective(45.0f,720.0f/576.0f,0.05f,350.0f);
+  shader->setUniform("viewerPos",from);
   // now create our light this is done after the camera so we can pass the
   // transpose of the projection matrix to the light to do correct eye space
   // transformations
-  ngl::Mat4 iv=m_cam.getViewMatrix();
-  iv.transpose();
-  ngl::Light light(from,ngl::Colour(1,1,1,1),ngl::Colour(1,1,1,1),ngl::LightModes::POINTLIGHT );
-  light.setTransform(iv);
-  // load these values to the shader as well
-  light.loadToShader("light");
-  startTimer(20);
+ startTimer(20);
 }
 
 
@@ -147,8 +136,8 @@ void NGLScene::loadMatricesToShader()
 //    MV=  M*m_cam.getViewMatrix();
 //    MVP= M*m_cam.getVPMatrix();
     M   = m_mouseGlobalTX * m_transform.getMatrix();
-    MV  = m_cam.getViewMatrix() * M;
-    MVP = m_cam.getVPMatrix() * M;
+    MV  = m_view * M;
+    MVP = m_project * MV;
     shader->setUniform("MV",MV);
     shader->setUniform("MVP",MVP);
     shader->setUniform("M",M);
