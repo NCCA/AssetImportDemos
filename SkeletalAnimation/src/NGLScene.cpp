@@ -63,6 +63,7 @@ void NGLScene::initializeGL()
     exit(EXIT_FAILURE);
   }
   std::cout<<"num animations "<<m_scene->mNumAnimations<<"\n";
+  m_numAnimations=m_scene->mNumAnimations;
   if(m_scene->mNumAnimations <1)
   {
       std::cerr<<"No animations in this scene exiting\n";
@@ -225,6 +226,18 @@ void NGLScene::keyPressEvent(QKeyEvent *_event)
   case Qt::Key_F : showFullScreen(); break;
   // show windowed
   case Qt::Key_N : showNormal(); break;
+  case Qt::Key_Left :
+    --m_activeAnimation;
+    m_activeAnimation=std::max(0ul, std::min(m_activeAnimation, m_numAnimations-1));
+    m_mesh.setActiveAnimation(m_activeAnimation);
+
+  break;
+  case Qt::Key_Right :
+    ++m_activeAnimation;
+    m_activeAnimation=std::max(0ul, std::min(m_activeAnimation, m_numAnimations-1));
+    m_mesh.setActiveAnimation(m_activeAnimation);
+  break;
+
   default : break;
   }
   // finally update the GLWindow and re-draw

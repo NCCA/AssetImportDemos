@@ -48,6 +48,7 @@ bool Mesh::load(const aiScene *_scene)
 {
   bool success=false;
   m_scene=_scene;
+  m_numAnimations=_scene->mNumAnimations;
   // we have already forced the load to be trinagles so no need to check
   m_vao=ngl::VAOFactory::createVAO("multiBufferIndexVAO" ,GL_TRIANGLES);
   // if we have a valid scene load and init
@@ -103,9 +104,9 @@ void Mesh::boneTransform(float _timeInSeconds, std::vector<ngl::Mat4>& o_transfo
   ngl::Mat4 identity(1.0);
   // calculate the current animation time at present this is set to only one animation in the scene and
   // hard coded to animaiton 0 but if we have more we would set it to the proper animation data
-  float ticksPerSecond = m_scene->mAnimations[0]->mTicksPerSecond != 0 ? m_scene->mAnimations[0]->mTicksPerSecond : 25.0f;
+  float ticksPerSecond = m_scene->mAnimations[m_activeAnimations]->mTicksPerSecond != 0 ? m_scene->mAnimations[0]->mTicksPerSecond : 25.0f;
   float timeInTicks = _timeInSeconds * ticksPerSecond;
-  float animationTime = fmod(timeInTicks, m_scene->mAnimations[0]->mDuration);
+  float animationTime = fmod(timeInTicks, m_scene->mAnimations[m_activeAnimations]->mDuration);
   // now traverse the animaiton heirarchy and get the transforms for the bones
   recurseNodeHeirarchy(animationTime, m_scene->mRootNode, identity);
   o_transforms.resize(m_numBones);
@@ -228,7 +229,7 @@ void Mesh::recurseNodeHeirarchy(float _animationTime, const aiNode* _node, const
 {
   std::string name(_node->mName.data);
 
-  const aiAnimation* animation = m_scene->mAnimations[0];
+  const aiAnimation* animation = m_scene->mAnimations[m_activeAnimations];
 
   ngl::Mat4 nodeTransform=AIU::aiMatrix4x4ToNGLMat4(_node->mTransformation);
 
@@ -289,7 +290,7 @@ void Mesh::initFromScene(const aiScene* _scene)
   unsigned int NumIndices = 0;
 
   // Count the number of vertices and indices
-  unsigned int size=m_entries.size();
+  auto size=m_entries.size();
   for (unsigned int i = 0 ; i < size; ++i)
   {
     m_entries[i].NumIndices    = _scene->mMeshes[i]->mNumFaces * 3;
@@ -324,13 +325,13 @@ void Mesh::initFromScene(const aiScene* _scene)
   m_vao->setVertexAttributePointer(2,3,GL_FLOAT,0,0);
 
   // as we are storing the abstract we need to get the concrete here to call setIndices, do a quick cast
+  auto vao=static_cast<MultiBufferIndexVAO *>( m_vao.get());
+  vao->setIndices(indices.size(),&indices[0], GL_UNSIGNED_INT);
 
-  dynamic_cast<MultiBufferIndexVAO *>( m_vao.get())->setIndices(indices.size(),&indices[0], GL_UNSIGNED_INT);
 
+  vao->setData(sizeof(VertexBoneData) * bones.size(),&bones[0],GL_STATIC_DRAW);
 
-  dynamic_cast<MultiBufferIndexVAO *>( m_vao.get())->setData(sizeof(VertexBoneData) * bones.size(),&bones[0],GL_STATIC_DRAW);
-
-  dynamic_cast<MultiBufferIndexVAO *>( m_vao.get())->setVertexAttributePointer(3,4,GL_INT,sizeof(VertexBoneData),0);
+  vao->setVertexAttributePointer(3,4,GL_INT,sizeof(VertexBoneData),0);
   m_vao->setVertexAttributePointer(4,4,GL_FLOAT,sizeof(VertexBoneData),4);
   m_vao->setNumIndices(indices.size());
   m_vao->unbind();
@@ -405,6 +406,11 @@ void Mesh::loadBones(unsigned int _meshIndex, const aiMesh* _mesh, std::vector<V
   }
 }
 
+void Mesh::setActiveAnimation(int _anim)
+{
+  m_activeAnimations=_anim;
+  std::min(int(m_activeAnimations), std::max(0, int(m_numAnimations)));
+}
 
 void Mesh::clear()
 {

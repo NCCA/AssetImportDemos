@@ -78,7 +78,8 @@ private:
     Assimp::Importer m_importer;
     /// @brief the mesh to be animated, this will do all the animation and drawing
     Mesh m_mesh;
-
+    size_t m_activeAnimation=0;
+    size_t m_numAnimations;
     ngl::Mat4 m_rootTransform;
 
     //----------------------------------------------------------------------------------------------------------------------
