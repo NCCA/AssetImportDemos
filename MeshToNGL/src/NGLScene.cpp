@@ -137,14 +137,14 @@ recurseScene(m_scene,m_scene->mRootNode,ngl::Mat4(1.0));
 // a simple structure to hold our vertex data
 struct vertData
 {
-  GLfloat u;
-  GLfloat v;
-  GLfloat nx;
-  GLfloat ny;
-  GLfloat nz;
   GLfloat x;
   GLfloat y;
   GLfloat z;
+  GLfloat nx;
+  GLfloat ny;
+  GLfloat nz;
+  GLfloat u;
+  GLfloat v;
 };
 
 void NGLScene::recurseScene(const aiScene *sc, const aiNode *nd,const ngl::Mat4 &_parentTx)
@@ -198,24 +198,16 @@ void NGLScene::recurseScene(const aiScene *sc, const aiNode *nd,const ngl::Mat4 
     // how much (in bytes) data we are copying
     // a pointer to the first element of data (in this case the address of the first element of the
     // std::vector
-    thisMesh.vao->setData(ngl::AbstractVAO::VertexData(verts.size()*sizeof(vertData),verts[0].u));
+    thisMesh.vao->setData(ngl::AbstractVAO::VertexData(verts.size()*sizeof(vertData),verts[0].x));
     // in this case we have packed our data in interleaved format as follows
     // u,v,nx,ny,nz,x,y,z
     // If you look at the shader we have the following attributes being used
     // attribute vec3 inVert; attribute 0
-    // attribute vec2 inUV; attribute 1
-    // attribute vec3 inNormal; attribure 2
-    // so we need to set the vertexAttributePointer so the correct size and type as follows
-    // vertex is attribute 0 with x,y,z(3) parts of type GL_FLOAT, our complete packed data is
-    // sizeof(vertData) and the offset into the data structure for the first x component is 5 (u,v,nx,ny,nz)..x
-    thisMesh.vao->setVertexAttributePointer(0,3,GL_FLOAT,sizeof(vertData),5);
-    // uv same as above but starts at 0 and is attrib 1 and only u,v so 2
-    thisMesh.vao->setVertexAttributePointer(1,2,GL_FLOAT,sizeof(vertData),0);
-    // normal same as vertex only starts at position 2 (u,v)-> nx
-    thisMesh.vao->setVertexAttributePointer(2,3,GL_FLOAT,sizeof(vertData),2);
-    // now we have set the vertex attributes we tell the VAO class how many indices to draw when
-    // glDrawArrays is called, in this case we use buffSize (but if we wished less of the sphere to be drawn we could
-    // specify less (in steps of 3))
+    // attribute vec3 inNormal; attribure 1
+    // attribute vec2 inUV; attribute 2
+    thisMesh.vao->setVertexAttributePointer(0,3,GL_FLOAT,sizeof(vertData),0);
+    thisMesh.vao->setVertexAttributePointer(1,3,GL_FLOAT,sizeof(vertData),3);
+    thisMesh.vao->setVertexAttributePointer(2,2,GL_FLOAT,sizeof(vertData),6);
     thisMesh.vao->setNumIndices(verts.size());
     // finally we have finished for now so time to unbind the VAO
     thisMesh.vao->unbind();
@@ -239,9 +231,6 @@ void NGLScene::loadMatricesToShader()
   ngl::Mat4 MVP;
   ngl::Mat3 normalMatrix;
   ngl::Mat4 M;
-//  M=m_transform.getMatrix()*m_mouseGlobalTX;
-//  MV=  M*m_cam.getViewMatrix();
-//  MVP= M*m_cam.getVPMatrix();
   M   = m_mouseGlobalTX * m_transform.getMatrix();
   MV  = m_view * M;
   MVP = m_project* MV;

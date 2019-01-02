@@ -35,7 +35,7 @@ Mesh::Mesh()
 {
   // ctor just does basic setup
   m_numBones = 0;
-  m_scene = NULL;
+  m_scene = nullptr;
 }
 
 Mesh::~Mesh()
@@ -221,7 +221,7 @@ const aiNodeAnim* Mesh::findNodeAnim(const aiAnimation* _animation, const std::s
     }
   }
 
-  return NULL;
+  return nullptr;
 }
 
 void Mesh::recurseNodeHeirarchy(float _animationTime, const aiNode* _node, const ngl::Mat4& _parentTransform)

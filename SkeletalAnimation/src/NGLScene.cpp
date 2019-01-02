@@ -13,7 +13,6 @@
 #include <assimp/postprocess.h>
 #include <assimp/vector3.h>
 #include <QTime>
-#include <boost/format.hpp>
 #include "MultiBufferIndexVAO.h"
 
 
@@ -58,7 +57,7 @@ void NGLScene::initializeGL()
                                 aiProcessPreset_TargetRealtime_Quality |
                                 aiProcess_Triangulate
                                 );
-  if(m_scene == 0)
+  if(m_scene == nullptr)
   {
     std::cerr<<"Error loading scene file\n";
     exit(EXIT_FAILURE);
@@ -115,7 +114,23 @@ void NGLScene::initializeGL()
   // set the shape using FOV 45 Aspect Ratio based on Width and Height
   // The final two are near and far clipping planes of 0.5 and 10
   m_project=ngl::perspective(45.0f,720.0f/576.0f,0.05f,350.0f);
+
+  ngl::Vec4 lightPos=from;
+  ngl::Mat4 iv=m_view;
+  iv.inverse().transpose();
+  shader->setUniform("light.position",lightPos*iv);
+  shader->setUniform("light.ambient",0.1f,0.1f,0.1f,1.0f);
+  shader->setUniform("light.diffuse",1.0f,1.0f,1.0f,1.0f);
+  shader->setUniform("light.specular",0.8f,0.8f,0.8f,1.0f);
+  // gold like phong material
+  shader->setUniform("material.ambient",0.274725f,0.1995f,0.0745f,0.0f);
+  shader->setUniform("material.diffuse",0.75164f,0.60648f,0.22648f,0.0f);
+  shader->setUniform("material.specular",0.628281f,0.555802f,0.3666065f,0.0f);
+  shader->setUniform("material.shininess",51.2f);
   shader->setUniform("viewerPos",from);
+
+
+
   // now create our light this is done after the camera so we can pass the
   // transpose of the projection matrix to the light to do correct eye space
   // transformations
@@ -182,8 +197,8 @@ void NGLScene::paintGL()
   auto size=transforms.size();
   for (unsigned int i = 0 ; i < size ; ++i)
   {
-    std::string name=boost::str(boost::format("gBones[%d]") % i );
-    shader->setUniform(name.c_str(),transforms[i]);
+    std::string name=fmt::format("gBones[{0}]", i );
+    shader->setUniform(name,transforms[i]);
   }
 
 

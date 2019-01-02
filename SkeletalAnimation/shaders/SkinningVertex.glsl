@@ -10,7 +10,6 @@ layout (location=3) in ivec4 BoneIDs;
 layout (location=4) in vec4  Weights;
 
 const int MAX_BONES = 100;
-//#define MAX_BONES 100
 uniform mat4 MVP;
 uniform mat4 M;
 uniform mat4 MV;
@@ -38,10 +37,6 @@ struct Lights
 	vec4 ambient;
 	vec4 diffuse;
 	vec4 specular;
-	float constantAttenuation;
-	float spotCosCutoff;
-	float quadraticAttenuation;
-	float linearAttenuation;
 };
 // our material
 uniform Materials material;
@@ -83,8 +78,5 @@ void main()
 	 dist = length(lightDir);
 	 lightDir/= dist;
 	 halfVector = normalize(eyeDirection + lightDir);
-
-
-
 
 }
