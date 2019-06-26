@@ -47,15 +47,15 @@ public :
   //----------------------------------------------------------------------------------------------------------------------
   /// @brief accessor for the number of bones in the mesh
   //----------------------------------------------------------------------------------------------------------------------
-  inline unsigned int numBones() const { return m_numBones;}
+  unsigned int numBones() const { return m_numBones;}
   //----------------------------------------------------------------------------------------------------------------------
   /// @brief accessor for the time in seconds of the animation
   //----------------------------------------------------------------------------------------------------------------------
-  inline double getDuration() const { return m_scene->mAnimations[0]->mDuration;}
+  double getDuration() const { return m_scene->mAnimations[0]->mDuration;}
   //----------------------------------------------------------------------------------------------------------------------
   /// @brief how many tick in the animation per second
   //----------------------------------------------------------------------------------------------------------------------
-  inline double getTicksPerSec() const { return m_scene->mAnimations[0]->mTicksPerSecond;}
+  double getTicksPerSec() const { return m_scene->mAnimations[0]->mTicksPerSecond;}
   //----------------------------------------------------------------------------------------------------------------------
   /// @brief this set the bone transformation for the current time. This is then passed to the shader
   /// to do the animation of the mesh

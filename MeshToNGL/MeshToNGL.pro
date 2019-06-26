@@ -33,8 +33,16 @@ OTHER_FILES+= shaders/*.glsl \
 							README.md
 # were are going to default to a console app
 CONFIG += console
-LIBS+=-lassimp
+!win32:LIBS+=-lassimp
+win32:{
+    message(Make sure that assimp is installed using vcpkg install assimp )
+  #  message("package dir is" $$VCPK)
+  INCLUDEPATH += $$(HOMEDRIVE)\\$$(HOMEPATH)\vcpkg\installed\x86-windows\include\
 
+  PRE_TARGETDEPS+=$$(HOMEDRIVE)\\$$(HOMEPATH)\vcpkg\installed\x86-windows\lib\assimp-vc140-mt.lib
+  LIBS+=-L$$(HOMEDRIVE)\\$$(HOMEPATH)\vcpkg\installed\x86-windows\lib\ -lassimp-vc140-mt
+
+}
 # note each command you add needs a ; as it will be run as a single line
 # first check if we are shadow building or not easiest way is to check out against current
 !equals(PWD, $${OUT_PWD}){
@@ -53,8 +61,10 @@ LIBS+=-lassimp
 }
 NGLPATH=$$(NGLDIR)
 isEmpty(NGLPATH){ # note brace must be here
-	message("including $HOME/NGL")
-	include($(HOME)/NGL/UseNGL.pri)
+        !win32:message("including $HOME/NGL")
+        !win32:include($(HOME)/NGL/UseNGL.pri)
+        win32:include($(HOMEDRIVE)\$(HOMEPATH)\NGL\UseNGL.pri)
+
 }
 else{ # note brace must be here
 	message("Using custom NGL location")

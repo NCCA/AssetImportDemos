@@ -187,7 +187,7 @@ void NGLScene::paintGL()
   if(m_animate)
   {
     QTime t=QTime::currentTime();
-    float time=(t.msec()/1000.0f)*m_mesh.getDuration()/m_mesh.getTicksPerSec();
+    float time=float(t.msec())/1000.0f*float(m_mesh.getDuration()/m_mesh.getTicksPerSec());
     m_mesh.boneTransform(time, transforms);
   }
   else
@@ -240,8 +240,6 @@ void NGLScene::keyPressEvent(QKeyEvent *_event)
 
   default : break;
   }
-  // finally update the GLWindow and re-draw
-  //if (isExposed())
     update();
 }
 
