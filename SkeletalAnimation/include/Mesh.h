@@ -83,7 +83,7 @@ private :
   {
       std::array<unsigned int,s_bonesPerVertex> ids;
       std::array<float,s_bonesPerVertex> weights;
-      void addBoneData(uint BoneID, float Weight);
+      void addBoneData(unsigned int BoneID, float Weight);
   };
 
   //----------------------------------------------------------------------------------------------------------------------

@@ -36,7 +36,16 @@ DESTDIR=./
 OTHER_FILES+= shaders/*.glsl \
 							README.md
 
-LIBS+=-lassimp
+!win32:LIBS+=-lassimp
+win32:{
+    message(Make sure that assimp is installed using vcpkg install assimp )
+  #  message("package dir is" $$VCPK)
+  INCLUDEPATH += $$(HOMEDRIVE)\\$$(HOMEPATH)\vcpkg\installed\x86-windows\include\
+
+  PRE_TARGETDEPS+=$$(HOMEDRIVE)\\$$(HOMEPATH)\vcpkg\installed\x86-windows\lib\assimp-vc140-mt.lib
+  LIBS+=-L$$(HOMEDRIVE)\\$$(HOMEPATH)\vcpkg\installed\x86-windows\lib\ -lassimp-vc140-mt
+
+}
 
 # were are going to default to a console app
 CONFIG += console
@@ -58,8 +67,9 @@ CONFIG += console
 }
 NGLPATH=$$(NGLDIR)
 isEmpty(NGLPATH){ # note brace must be here
-	message("including $HOME/NGL")
-	include($(HOME)/NGL/UseNGL.pri)
+        !win32:message("including $HOME/NGL")
+        !win32:include($(HOME)/NGL/UseNGL.pri)
+        win32:include($(HOMEDRIVE)\$(HOMEPATH)\NGL\UseNGL.pri)
 }
 else{ # note brace must be here
 	message("Using custom NGL location")
