@@ -57,7 +57,7 @@ void NGLScene::initializeGL()
 {
   // we must call this first before any other GL commands to load and link the
   // gl commands from the lib, if this is not done program will crash
-  ngl::NGLInit::instance();
+  ngl::NGLInit::initialize();
 
   glClearColor(0.4f, 0.4f, 0.4f, 1.0f);			   // Grey Background
   // enable depth testing for drawing
@@ -80,45 +80,43 @@ void NGLScene::initializeGL()
   m_view=ngl::lookAt(from,center,ngl::Vec3::up());
 
   // now to load the shader and set the values
- // grab an instance of shader manager
- ngl::ShaderLib *shader=ngl::ShaderLib::instance();
  // we are creating a shader called Phong to save typos
  // in the code create some constexpr
  constexpr auto shaderProgram="Phong";
  constexpr auto vertexShader="PhongVertex";
  constexpr auto fragShader="PhongFragment";
  // create the shader program
- shader->createShaderProgram(shaderProgram);
+ ngl::ShaderLib::createShaderProgram(shaderProgram);
  // now we are going to create empty shaders for Frag and Vert
- shader->attachShader(vertexShader,ngl::ShaderType::VERTEX);
- shader->attachShader(fragShader,ngl::ShaderType::FRAGMENT);
+ ngl::ShaderLib::attachShader(vertexShader,ngl::ShaderType::VERTEX);
+ ngl::ShaderLib::attachShader(fragShader,ngl::ShaderType::FRAGMENT);
  // attach the source
- shader->loadShaderSource(vertexShader,"shaders/PhongVertex.glsl");
- shader->loadShaderSource(fragShader,"shaders/PhongFragment.glsl");
+ ngl::ShaderLib::loadShaderSource(vertexShader,"shaders/PhongVertex.glsl");
+ ngl::ShaderLib::loadShaderSource(fragShader,"shaders/PhongFragment.glsl");
  // compile the shaders
- shader->compileShader(vertexShader);
- shader->compileShader(fragShader);
+ ngl::ShaderLib::compileShader(vertexShader);
+ ngl::ShaderLib::compileShader(fragShader);
  // add them to the program
- shader->attachShaderToProgram(shaderProgram,vertexShader);
- shader->attachShaderToProgram(shaderProgram,fragShader);
+ ngl::ShaderLib::attachShaderToProgram(shaderProgram,vertexShader);
+ ngl::ShaderLib::attachShaderToProgram(shaderProgram,fragShader);
 
  // now we have associated that data we can link the shader
- shader->linkProgramObject(shaderProgram);
+ ngl::ShaderLib::linkProgramObject(shaderProgram);
  // and make it active ready to load values
- (*shader)[shaderProgram]->use();
+ ngl::ShaderLib::use(shaderProgram);
  ngl::Vec4 lightPos=from;
  ngl::Mat4 iv=m_view;
  iv.inverse().transpose();
- shader->setUniform("light.position",lightPos*iv);
- shader->setUniform("light.ambient",0.1f,0.1f,0.1f,1.0f);
- shader->setUniform("light.diffuse",1.0f,1.0f,1.0f,1.0f);
- shader->setUniform("light.specular",0.8f,0.8f,0.8f,1.0f);
+ ngl::ShaderLib::setUniform("light.position",lightPos*iv);
+ ngl::ShaderLib::setUniform("light.ambient",0.1f,0.1f,0.1f,1.0f);
+ ngl::ShaderLib::setUniform("light.diffuse",1.0f,1.0f,1.0f,1.0f);
+ ngl::ShaderLib::setUniform("light.specular",0.8f,0.8f,0.8f,1.0f);
  // gold like phong material
- shader->setUniform("material.ambient",0.274725f,0.1995f,0.0745f,0.0f);
- shader->setUniform("material.diffuse",0.75164f,0.60648f,0.22648f,0.0f);
- shader->setUniform("material.specular",0.628281f,0.555802f,0.3666065f,0.0f);
- shader->setUniform("material.shininess",51.2f);
- shader->setUniform("viewerPos",from);
+ ngl::ShaderLib::setUniform("material.ambient",0.274725f,0.1995f,0.0745f,0.0f);
+ ngl::ShaderLib::setUniform("material.diffuse",0.75164f,0.60648f,0.22648f,0.0f);
+ ngl::ShaderLib::setUniform("material.specular",0.628281f,0.555802f,0.3666065f,0.0f);
+ ngl::ShaderLib::setUniform("material.shininess",51.2f);
+ ngl::ShaderLib::setUniform("viewerPos",from);
 
 
   buildVAOFromScene();
@@ -225,8 +223,7 @@ void NGLScene::recurseScene(const aiScene *sc, const aiNode *nd,const ngl::Mat4 
 
 void NGLScene::loadMatricesToShader()
 {
-  ngl::ShaderLib *shader=ngl::ShaderLib::instance();
-
+  
   ngl::Mat4 MV;
   ngl::Mat4 MVP;
   ngl::Mat3 normalMatrix;
@@ -236,10 +233,10 @@ void NGLScene::loadMatricesToShader()
   MVP = m_project* MV;
   normalMatrix=MV;
   normalMatrix.inverse().transpose();
-  shader->setUniform("MV",MV);
-  shader->setUniform("MVP",MVP);
-  shader->setUniform("normalMatrix",normalMatrix);
-  shader->setUniform("M",M);
+  ngl::ShaderLib::setUniform("MV",MV);
+  ngl::ShaderLib::setUniform("MVP",MVP);
+  ngl::ShaderLib::setUniform("normalMatrix",normalMatrix);
+  ngl::ShaderLib::setUniform("M",M);
 }
 
 void NGLScene::paintGL()
@@ -247,16 +244,13 @@ void NGLScene::paintGL()
   // clear the screen and depth buffer
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glViewport(0,0,m_win.width,m_win.height);
-  // grab an instance of the shader manager
-  ngl::ShaderLib *shader=ngl::ShaderLib::instance();
-  (*shader)["Phong"]->use();
+  ngl::ShaderLib::use("Phong");
 
   // Rotation based on the mouse position for our global transform
   ngl::Transformation trans;
   ngl::Mat4 rotX;
   ngl::Mat4 rotY;
   // create the rotation matrices
-  rotX.rotateX(m_win.spinXFace);
   rotY.rotateY(m_win.spinYFace);
   // multiply the rotations
   m_mouseGlobalTX=rotY*rotX;

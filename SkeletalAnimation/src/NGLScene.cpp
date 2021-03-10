@@ -15,10 +15,6 @@
 #include <QTime>
 #include "MultiBufferIndexVAO.h"
 
-#ifdef WIN32
-    #define NOMINMAX
-#endif
-
 NGLScene::NGLScene(const char *_fname)
 {
   setTitle("Using libassimp with NGL for Animation");
@@ -45,7 +41,7 @@ void NGLScene::initializeGL()
 {
   // we must call this first before any other GL commands to load and link the
   // gl commands from the lib, if this is not done program will crash
-  ngl::NGLInit::instance();
+  ngl::NGLInit::initialize();
   // register our new Factory to draw the VAO
   ngl::VAOFactory::registerVAOCreator("multiBufferIndexVAO", MultiBufferIndexVAO::create);
   ngl::VAOFactory::listCreators();
@@ -78,31 +74,29 @@ void NGLScene::initializeGL()
       exit(EXIT_FAILURE);
   }
   // now to load the shader and set the values
-  // grab an instance of shader manager
-  ngl::ShaderLib *shader=ngl::ShaderLib::instance();
   // we are creating a shader called Skinning use string to avoid typos
   auto constexpr Skinning="Skinning";
   auto constexpr SkinningVertex="SkinningVertex";
   auto constexpr SkinningFragment="SkinningFragment";
 
-  shader->createShaderProgram(Skinning);
+  ngl::ShaderLib::createShaderProgram(Skinning);
   // now we are going to create empty shaders for Frag and Vert
-  shader->attachShader(SkinningVertex,ngl::ShaderType::VERTEX);
-  shader->attachShader(SkinningFragment,ngl::ShaderType::FRAGMENT);
+  ngl::ShaderLib::attachShader(SkinningVertex,ngl::ShaderType::VERTEX);
+  ngl::ShaderLib::attachShader(SkinningFragment,ngl::ShaderType::FRAGMENT);
   // attach the source
-  shader->loadShaderSource(SkinningVertex,"shaders/SkinningVertex.glsl");
-  shader->loadShaderSource(SkinningFragment,"shaders/SkinningFragment.glsl");
+  ngl::ShaderLib::loadShaderSource(SkinningVertex,"shaders/SkinningVertex.glsl");
+  ngl::ShaderLib::loadShaderSource(SkinningFragment,"shaders/SkinningFragment.glsl");
   // compile the shaders
-  shader->compileShader(SkinningVertex);
-  shader->compileShader(SkinningFragment);
+  ngl::ShaderLib::compileShader(SkinningVertex);
+  ngl::ShaderLib::compileShader(SkinningFragment);
   // add them to the program
-  shader->attachShaderToProgram(Skinning,SkinningVertex);
-  shader->attachShaderToProgram(Skinning,SkinningFragment);
+  ngl::ShaderLib::attachShaderToProgram(Skinning,SkinningVertex);
+  ngl::ShaderLib::attachShaderToProgram(Skinning,SkinningFragment);
   // now bind the shader attributes for most NGL primitives we use the following
   // now we have associated this data we can link the shader
-  shader->linkProgramObject(Skinning);
-  shader->printRegisteredUniforms(Skinning);
-  (*shader)[Skinning]->use();
+  ngl::ShaderLib::linkProgramObject(Skinning);
+  ngl::ShaderLib::printRegisteredUniforms(Skinning);
+  ngl::ShaderLib::use(Skinning);
 
   ngl::Vec3 min,max;
   AIU::getSceneBoundingBox(m_scene,min,max);
@@ -121,16 +115,16 @@ void NGLScene::initializeGL()
   ngl::Vec4 lightPos=from;
   ngl::Mat4 iv=m_view;
   iv.inverse().transpose();
-  shader->setUniform("light.position",lightPos*iv);
-  shader->setUniform("light.ambient",0.1f,0.1f,0.1f,1.0f);
-  shader->setUniform("light.diffuse",1.0f,1.0f,1.0f,1.0f);
-  shader->setUniform("light.specular",0.8f,0.8f,0.8f,1.0f);
+  ngl::ShaderLib::setUniform("light.position",lightPos*iv);
+  ngl::ShaderLib::setUniform("light.ambient",0.1f,0.1f,0.1f,1.0f);
+  ngl::ShaderLib::setUniform("light.diffuse",1.0f,1.0f,1.0f,1.0f);
+  ngl::ShaderLib::setUniform("light.specular",0.8f,0.8f,0.8f,1.0f);
   // gold like phong material
-  shader->setUniform("material.ambient",0.274725f,0.1995f,0.0745f,0.0f);
-  shader->setUniform("material.diffuse",0.75164f,0.60648f,0.22648f,0.0f);
-  shader->setUniform("material.specular",0.628281f,0.555802f,0.3666065f,0.0f);
-  shader->setUniform("material.shininess",51.2f);
-  shader->setUniform("viewerPos",from);
+  ngl::ShaderLib::setUniform("material.ambient",0.274725f,0.1995f,0.0745f,0.0f);
+  ngl::ShaderLib::setUniform("material.diffuse",0.75164f,0.60648f,0.22648f,0.0f);
+  ngl::ShaderLib::setUniform("material.specular",0.628281f,0.555802f,0.3666065f,0.0f);
+  ngl::ShaderLib::setUniform("material.shininess",51.2f);
+  ngl::ShaderLib::setUniform("viewerPos",from);
 
 
 
@@ -145,20 +139,15 @@ void NGLScene::initializeGL()
 
 void NGLScene::loadMatricesToShader()
 {
-  ngl::ShaderLib *shader=ngl::ShaderLib::instance();
-
     ngl::Mat4 MV;
     ngl::Mat4 MVP;
     ngl::Mat4 M;
-//    M=m_transform.getMatrix()*m_mouseGlobalTX;
-//    MV=  M*m_cam.getViewMatrix();
-//    MVP= M*m_cam.getVPMatrix();
     M   = m_mouseGlobalTX * m_transform.getMatrix();
     MV  = m_view * M;
     MVP = m_project * MV;
-    shader->setUniform("MV",MV);
-    shader->setUniform("MVP",MVP);
-    shader->setUniform("M",M);
+    ngl::ShaderLib::setUniform("MV",MV);
+    ngl::ShaderLib::setUniform("MVP",MVP);
+    ngl::ShaderLib::setUniform("M",M);
 }
 
 void NGLScene::paintGL()
@@ -166,9 +155,7 @@ void NGLScene::paintGL()
   glViewport(0,0,m_win.width,m_win.height);
   // clear the screen and depth buffer
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  // grab an instance of the shader manager
-  ngl::ShaderLib *shader=ngl::ShaderLib::instance();
-  (*shader)["Skinning"]->use();
+  ngl::ShaderLib::use("Skinning");
 
   // Rotation based on the mouse position for our global transform
   ngl::Transformation trans;
@@ -201,7 +188,7 @@ void NGLScene::paintGL()
   for (unsigned int i = 0 ; i < size ; ++i)
   {
     std::string name=fmt::format("gBones[{0}]", i );
-    shader->setUniform(name,transforms[i]);
+    ngl::ShaderLib::setUniform(name,transforms[i]);
   }
 
 
@@ -230,22 +217,13 @@ void NGLScene::keyPressEvent(QKeyEvent *_event)
   case Qt::Key_N : showNormal(); break;
   case Qt::Key_Left :
     --m_activeAnimation;
-#ifdef WIN32
-    m_activeAnimation=std::max(0u, std::min(m_activeAnimation, m_numAnimations-1));
-#else
-    m_activeAnimation=std::max(0ul, std::min(m_activeAnimation, m_numAnimations-1));
-#endif
+    m_activeAnimation=std::clamp(m_activeAnimation,size_t(0), m_numAnimations-1);
     m_mesh.setActiveAnimation(m_activeAnimation);
 
   break;
   case Qt::Key_Right :
     ++m_activeAnimation;
-#ifdef WIN32
-    m_activeAnimation=std::max(0u, std::min(m_activeAnimation, m_numAnimations-1));
-#else
-    m_activeAnimation=std::max(0ul, std::min(m_activeAnimation, m_numAnimations-1));
-
-#endif
+    m_activeAnimation=std::clamp(m_activeAnimation,size_t(0), m_numAnimations-1);
     m_mesh.setActiveAnimation(m_activeAnimation);
   break;
 
